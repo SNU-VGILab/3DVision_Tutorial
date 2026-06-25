@@ -1,6 +1,7 @@
 PROJECT_NAME := aiexpert
 IMAGE_NAME := seunguk/${PROJECT_NAME}
 SHM_SIZE := 64gb
+CUDA_ARCHITECTURES ?= 86
 DIR ?=./user0
 GPU_ID ?= 0
 PORT ?= 9000
@@ -12,6 +13,7 @@ all: build run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6
 build:
 	docker build \
 		--tag ${IMAGE_NAME}:latest \
+		--build-arg CUDA_ARCHITECTURES="${CUDA_ARCHITECTURES}" \
 		--build-arg USERNAME=$$(whoami) \
 		--build-arg USER_UID=$$(id -u) \
 		--build-arg USER_GID=$$(id -g) \

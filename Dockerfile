@@ -102,10 +102,12 @@ RUN pip install --no-cache-dir \
     jupyter
 
 # Install warpconvnet and install only the 3rdparty/cutlass submodule
-RUN mkdir -p /opt/warpconvnet && cd /opt/warpconvnet && \
+RUN export TORCH_CUDA_ARCH_LIST="$(echo "$CUDA_ARCHITECTURES" | tr ';' '\n' | awk '$0 > 70 {print substr($0,1,1)"."substr($0,2)}' | tr '\n' ' ' | sed 's/ $//')" && \
+    mkdir -p /opt/warpconvnet && cd /opt/warpconvnet && \
     git clone https://github.com/NVlabs/WarpConvNet.git && \
     cd WarpConvNet && \
     git submodule update --init 3rdparty/cutlass && \
+    pip install --no-cache-dir 'setuptools-scm<10' && \
     python -m build --wheel --no-isolation && \
     pip install dist/*.whl
 
