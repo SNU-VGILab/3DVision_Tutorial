@@ -142,7 +142,7 @@ RUN apt-get update && apt-get install -y \
 RUN echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME; \
     chmod 0440 /etc/sudoers.d/$USERNAME;
 
-USER $USER
+USER $USERNAME
 WORKDIR /app
 ENV WARPCONVNET_FWD_ALGO_MODE="[explicit_gemm,implicit_gemm]"
 ENV WARPCONVNET_BWD_ALGO_MODE="[explicit_gemm,implicit_gemm]"

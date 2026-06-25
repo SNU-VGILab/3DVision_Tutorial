@@ -12,9 +12,9 @@ all: build run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6
 build:
 	docker build \
 		--tag ${IMAGE_NAME}:latest \
-		--build-arg USER=$$(whoami) \
-		--build-arg UID=$$(id -u) \
-		--build-arg GID=$$(id -g) \
+		--build-arg USERNAME=$$(whoami) \
+		--build-arg USER_UID=$$(id -u) \
+		--build-arg USER_GID=$$(id -g) \
 		-f Dockerfile .
 
 run:

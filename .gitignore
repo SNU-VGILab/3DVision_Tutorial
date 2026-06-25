@@ -1,2 +1,4 @@
 data/
 user*
+__pycache__/
+*.py[cod]
