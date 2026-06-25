@@ -2,35 +2,39 @@ PROJECT_NAME := aiexpert
 IMAGE_NAME := seunguk/${PROJECT_NAME}
 SHM_SIZE := 64gb
 CUDA_ARCHITECTURES ?= 86
-DIR ?=./user0
+DIR ?= user0
 GPU_ID ?= 0
 PORT ?= 9000
 NERFSTUDIO_PORT ?= 10000
 USER_ID ?= 0
+SESSION ?= 3d-perception
 
 all: build run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
 
 build:
 	docker build \
 		--tag ${IMAGE_NAME}:latest \
-		--build-arg CUDA_ARCHITECTURES="${CUDA_ARCHITECTURES}" \
 		--build-arg USERNAME=$$(whoami) \
 		--build-arg USER_UID=$$(id -u) \
 		--build-arg USER_GID=$$(id -g) \
+		--build-arg CUDA_ARCHITECTURES="${CUDA_ARCHITECTURES}" \
 		-f Dockerfile .
 
 run:
 	if [ ! -d "${DIR}" ]; then \
-		mkdir ${DIR}; \
+		mkdir -p ${DIR}; \
+	fi
+	if [ ! -d "data" ]; then \
+		mkdir -p data; \
 	fi
 	docker run \
 		-itd \
 		--rm \
-		--shm-size 64gb \
+		--shm-size ${SHM_SIZE} \
 		--workdir="/app" \
 		--gpus "device=${GPU_ID}" \
-		--volume="./${DIR}:/app" \
-		--volume="./data:/data" \
+		--volume="$$(pwd)/${DIR}:/app" \
+		--volume="$$(pwd)/data:/data" \
 		-p ${PORT}:8888 \
 		-p ${NERFSTUDIO_PORT}:${NERFSTUDIO_PORT} \
 		-e NERFSTUDIO_PORT=${NERFSTUDIO_PORT} \
@@ -38,13 +42,15 @@ run:
 		${IMAGE_NAME}:latest
 
 download-data:
-	wget "https://cvg-data.inf.ethz.ch/openscene/data/scannet_processed/scannet_3d.zip" -O ./data/scannet_3d.zip
-	unzip ./data/scannet_3d.zip -d ./data
+	mkdir -p data
+	if [ ! -f data/scannet_3d.zip ]; then \
+		wget "https://cvg-data.inf.ethz.ch/openscene/data/scannet_processed/scannet_3d.zip" -O data/scannet_3d.zip; \
+	fi
+	python3 -m zipfile -e data/scannet_3d.zip data
 
 copy_materials_single:
-	# mkdir ./user${USER_ID}
-	cp materials/3DPerception.ipynb ./user${USER_ID}
-	cp materials/*.py ./user${USER_ID}
+	mkdir -p user${USER_ID}
+	cp -r materials/${SESSION}/. user${USER_ID}/
 
 copy-materials:
 	$(MAKE) copy_materials_single USER_ID=0
@@ -81,4 +87,4 @@ run-user7:
 	$(MAKE) run DIR=user7 GPU_ID=7 PORT=9007 NERFSTUDIO_PORT=10007
 
 
-.PHONY: run build
+.PHONY: all run build download-data copy_materials_single copy-materials run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
