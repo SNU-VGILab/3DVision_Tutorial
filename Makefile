@@ -48,6 +48,46 @@ download-data:
 	fi
 	python3 -m zipfile -e data/scannet_3d.zip data
 
+# NeRF synthetic ("blender") dataset.
+BLENDER_SCENES := chair drums ficus hotdog lego materials mic ship
+BLENDER_MIRROR := https://huggingface.co/datasets/nerfbaselines/nerfbaselines-data/resolve/main/blender
+download-blender:
+	mkdir -p data/blender
+	for s in ${BLENDER_SCENES}; do \
+		if [ ! -d "data/blender/$$s/train" ]; then \
+			wget "${BLENDER_MIRROR}/$$s.zip" -O data/blender/$$s.zip; \
+			python3 -m zipfile -e data/blender/$$s.zip data/blender; \
+			rm -f data/blender/$$s.zip; \
+		fi; \
+	done
+
+# mip-NeRF 360 dataset (https://jonbarron.info/mipnerf360/), direct from Google Cloud Storage.
+download-mipnerf360:
+	mkdir -p data/mipnerf360
+	if [ ! -d "data/mipnerf360/bicycle" ]; then \
+		wget "http://storage.googleapis.com/gresearch/refraw360/360_v2.zip" -O data/mipnerf360/360_v2.zip; \
+		python3 -m zipfile -e data/mipnerf360/360_v2.zip data/mipnerf360; \
+		rm -f data/mipnerf360/360_v2.zip; \
+	fi
+	if [ ! -d "data/mipnerf360/flowers" ]; then \
+		wget "http://storage.googleapis.com/gresearch/refraw360/360_extra_scenes.zip" -O data/mipnerf360/360_extra_scenes.zip; \
+		python3 -m zipfile -e data/mipnerf360/360_extra_scenes.zip data/mipnerf360; \
+		rm -f data/mipnerf360/360_extra_scenes.zip; \
+	fi
+
+download-nerf-data: download-blender download-mipnerf360
+
+# SIREN SDF point clouds (oriented .xyz: xyz positions + unit normals) from the SIREN
+download-siren-data:
+	mkdir -p data
+	python3 -m pip install -q gdown
+	if [ ! -f data/thai_statue.xyz ]; then \
+		gdown "1tkrHBciOzGLKZP0Pd9ye0Yz71JMdAtfl" -O data/thai_statue.xyz; \
+	fi
+	if [ ! -f data/interior_room.xyz ]; then \
+		gdown "1SqlByPMwf6EcTJNrvlpRn5-GEO9DiYhI" -O data/interior_room.xyz; \
+	fi
+
 copy_materials_single:
 	mkdir -p user${USER_ID}
 	cp -r materials/${SESSION}/. user${USER_ID}/
@@ -87,4 +127,4 @@ run-user7:
 	$(MAKE) run DIR=user7 GPU_ID=7 PORT=9007 NERFSTUDIO_PORT=10007
 
 
-.PHONY: all run build download-data copy_materials_single copy-materials run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
+.PHONY: all run build download-data download-blender download-mipnerf360 download-nerf-data download-siren-data copy_materials_single copy-materials run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
