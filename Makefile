@@ -41,17 +41,18 @@ run:
 		--name aiexpert_${DIR} \
 		${IMAGE_NAME}:latest
 
+
+BLENDER_SCENES := chair drums ficus hotdog lego materials mic ship
+BLENDER_MIRROR := https://huggingface.co/datasets/nerfbaselines/nerfbaselines-data/resolve/main/blender
 download-data:
 	mkdir -p data
+	python3 -m pip install -q gdown
+	# --- ScanNet (3D perception) ---
 	if [ ! -f data/scannet_3d.zip ]; then \
 		wget "https://cvg-data.inf.ethz.ch/openscene/data/scannet_processed/scannet_3d.zip" -O data/scannet_3d.zip; \
 	fi
 	python3 -m zipfile -e data/scannet_3d.zip data
-
-# NeRF synthetic ("blender") dataset.
-BLENDER_SCENES := chair drums ficus hotdog lego materials mic ship
-BLENDER_MIRROR := https://huggingface.co/datasets/nerfbaselines/nerfbaselines-data/resolve/main/blender
-download-blender:
+	# --- NeRF synthetic ("blender"), from the Hugging Face mirror ---
 	mkdir -p data/blender
 	for s in ${BLENDER_SCENES}; do \
 		if [ ! -d "data/blender/$$s/train" ]; then \
@@ -60,9 +61,7 @@ download-blender:
 			rm -f data/blender/$$s.zip; \
 		fi; \
 	done
-
-# mip-NeRF 360 dataset (https://jonbarron.info/mipnerf360/), direct from Google Cloud Storage.
-download-mipnerf360:
+	# --- mip-NeRF 360 (https://jonbarron.info/mipnerf360/), from Google Cloud Storage ---
 	mkdir -p data/mipnerf360
 	if [ ! -d "data/mipnerf360/bicycle" ]; then \
 		wget "http://storage.googleapis.com/gresearch/refraw360/360_v2.zip" -O data/mipnerf360/360_v2.zip; \
@@ -74,13 +73,7 @@ download-mipnerf360:
 		python3 -m zipfile -e data/mipnerf360/360_extra_scenes.zip data/mipnerf360; \
 		rm -f data/mipnerf360/360_extra_scenes.zip; \
 	fi
-
-download-nerf-data: download-blender download-mipnerf360
-
-# SIREN SDF point clouds (oriented .xyz: xyz positions + unit normals) from the SIREN
-download-siren-data:
-	mkdir -p data
-	python3 -m pip install -q gdown
+	# --- SIREN SDF point clouds (oriented .xyz: positions + unit normals) ---
 	if [ ! -f data/thai_statue.xyz ]; then \
 		gdown "1tkrHBciOzGLKZP0Pd9ye0Yz71JMdAtfl" -O data/thai_statue.xyz; \
 	fi
@@ -127,4 +120,4 @@ run-user7:
 	$(MAKE) run DIR=user7 GPU_ID=7 PORT=9007 NERFSTUDIO_PORT=10007
 
 
-.PHONY: all run build download-data download-blender download-mipnerf360 download-nerf-data download-siren-data copy_materials_single copy-materials run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
+.PHONY: all run build download-data copy_materials_single copy-materials run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
