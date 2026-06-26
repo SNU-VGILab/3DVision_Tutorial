@@ -259,18 +259,17 @@ def generate_sample_point_cloud(n_points=1000, shape="sphere", noise_level=0.0):
 
 
 def get_scannet_root(root=None):
-    if root is not None:
-        return Path(root)
+    path = Path(root) if root is not None else Path("/data/scannet_3d")
+    path = path.expanduser()
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
 
-    candidates = []
-    if os.environ.get("SCANNET_DATA_DIR"):
-        candidates.append(Path(os.environ["SCANNET_DATA_DIR"]))
-    candidates.extend([Path("/data/scannet_3d"), Path("../../data/scannet_3d"), Path("data/scannet_3d")])
-
-    for candidate in candidates:
-        if (candidate / "scannetv2_train.txt").exists():
-            return candidate
-    raise FileNotFoundError("ScanNet data root not found. Run the ScanNet loading cell first or set SCANNET_DATA_DIR.")
+    required_file = path / "scannetv2_train.txt"
+    if required_file.exists():
+        return path
+    raise FileNotFoundError(
+        f"ScanNet data root must point to a directory containing scannetv2_train.txt. Got: {path}"
+    )
 
 
 def find_scannet_scene(root, scene_name, split=None):
