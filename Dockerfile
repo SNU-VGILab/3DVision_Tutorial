@@ -1,5 +1,4 @@
 FROM pytorch/pytorch:2.5.1-cuda12.1-cudnn9-devel
-ARG CUDA_ARCHITECTURES="90;89;86;80;75;70;61"
 
 # Install dependencies
 ENV QT_XCB_GL_INTEGRATION=xcb_egl
@@ -11,7 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends --no-install-su
     htop \
     mc \
     tmux \
-    sudo \
     ninja-build \
     build-essential \
     libboost-program-options-dev \
@@ -42,6 +40,8 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.31.3/cmake-3.31.3
     && rm /tmp/cmake-install.sh \
     && ln -s /opt/cmake-3.31.3/bin/* /usr/local/bin
 
+ARG CUDA_ARCHITECTURES="86"
+
 # Build and install GLOMAP.
 RUN git clone https://github.com/colmap/glomap.git && \
     cd glomap && \
@@ -69,7 +69,9 @@ RUN git clone https://github.com/colmap/colmap.git && \
 # Upgrade pip and install dependencies.
 RUN pip install --no-cache-dir --upgrade pip 'setuptools<70.0.0'
 
-RUN pip install flash-attn --no-build-isolation
+RUN export TORCH_CUDA_ARCH_LIST="$(echo "$CUDA_ARCHITECTURES" | tr ';' '\n' | awk '$0 > 70 {print substr($0,1,1)"."substr($0,2)}' | tr '\n' ' ' | sed 's/ $//')" && \
+    export MAX_JOBS=4 && \
+    pip install --no-cache-dir flash-attn --no-build-isolation
 
 # Install torch_scatter from github source
 RUN export TORCH_CUDA_ARCH_LIST="$(echo "$CUDA_ARCHITECTURES" | tr ';' '\n' | awk '$0 > 70 {print substr($0,1,1)"."substr($0,2)}' | tr '\n' ' ' | sed 's/ $//')" && \
@@ -85,6 +87,7 @@ RUN pip install --no-cache-dir \
     isort                   \
     flake8                  \
     build                   \
+    "setuptools-scm<10"     \
     pybind11                \
     ipdb                    \
     pytest                  \
@@ -106,12 +109,13 @@ RUN mkdir -p /opt/warpconvnet && cd /opt/warpconvnet && \
     git clone https://github.com/NVlabs/WarpConvNet.git && \
     cd WarpConvNet && \
     git submodule update --init 3rdparty/cutlass && \
+    export TORCH_CUDA_ARCH_LIST="$(echo "$CUDA_ARCHITECTURES" | tr ';' '\n' | awk '$0 > 70 {print substr($0,1,1)"."substr($0,2)}' | tr '\n' ' ' | sed 's/ $//')" && \
     python -m build --wheel --no-isolation && \
     pip install dist/*.whl
 
 RUN git clone --branch master --recursive https://github.com/cvg/Hierarchical-Localization.git /opt/hloc && \
     cd /opt/hloc && git checkout v1.4 && python -m pip install --no-cache-dir . && cd ~ && \
-    TCNN_CUDA_ARCHITECTURES="${CUDA_ARCHITECTURES}" pip install --no-cache-dir "git+https://github.com/NVlabs/tiny-cuda-nn.git@b3473c81396fe927293bdfd5a6be32df8769927c#subdirectory=bindings/torch" && \
+    TCNN_CUDA_ARCHITECTURES="${CUDA_ARCHITECTURES}" pip install --no-cache-dir --no-build-isolation "git+https://github.com/NVlabs/tiny-cuda-nn.git@b3473c81396fe927293bdfd5a6be32df8769927c#subdirectory=bindings/torch" && \
     pip install --no-cache-dir pycolmap==0.6.1 pyceres==2.1 omegaconf==2.3.0
 
 # Install gsplat and nerfstudio.
@@ -122,11 +126,19 @@ RUN git clone --branch master --recursive https://github.com/cvg/Hierarchical-Lo
 # - https://github.com/nerfstudio-project/gsplat/blob/db444b904976d6e01e79b736dd89a1070b0ee1d0/setup.py#L13-L23
 RUN export TORCH_CUDA_ARCH_LIST="$(echo "$CUDA_ARCHITECTURES" | tr ';' '\n' | awk '$0 > 70 {print substr($0,1,1)"."substr($0,2)}' | tr '\n' ' ' | sed 's/ $//')" && \
     export MAX_JOBS=4 && \
-    pip install --no-cache-dir git+https://github.com/nerfstudio-project/gsplat.git@v1.4.0 && \
+    pip install --no-cache-dir --no-build-isolation git+https://github.com/nerfstudio-project/gsplat.git@v1.4.0 && \
     pip install --no-cache-dir git+https://github.com/nerfstudio-project/nerfstudio@v1.1.5 'numpy<2.0.0' && \
     rm -rf /tmp/nerfstudio
 
-# Add a non-root user with a fixed UID and GID
+RUN pip install --no-cache-dir --force-reinstall --no-deps \
+        --no-index --find-links https://data.pyg.org/whl/torch-2.5.1+cu121.html \
+        torch-scatter && \
+    pip install --no-cache-dir --force-reinstall --no-deps \
+        opencv-python==4.10.0.84 \
+        "cupy-cuda12x<14" \
+        fastrlock
+
+# Add a non-root user with a fixed UID and GID.
 ARG USERNAME=user
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
@@ -135,15 +147,9 @@ RUN set -eux; \
     groupadd --gid $USER_GID $USERNAME; \
     useradd --uid $USER_UID --gid $USER_GID --no-log-init -m -G video $USERNAME
 
-# Add sudo and allow the non-root user to execute commands as root
-# without a password.
-RUN apt-get update && apt-get install -y \
-    sudo;
-RUN echo "$USERNAME ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME; \
-    chmod 0440 /etc/sudoers.d/$USERNAME;
-
-USER $USER
+USER ${USERNAME}
 WORKDIR /app
+ENV PATH="/build/colmap/bin:/build/glomap/bin:${PATH}"
 ENV WARPCONVNET_FWD_ALGO_MODE="[explicit_gemm,implicit_gemm]"
 ENV WARPCONVNET_BWD_ALGO_MODE="[explicit_gemm,implicit_gemm]"
-CMD ["jupyter", "lab", "--allow-root", "--ip='0.0.0.0'", "--NotebookApp.token=''", "--NotebookApp.password='argon2:$argon2id$v=19$m=10240,t=10,p=8$V/h+ZxLLsmmhFHNpiipLYA$mUw3maIGq3zhoLPm+S+Tk9STJm5+wkCEIYd7N4ku4DM'"]
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser"]

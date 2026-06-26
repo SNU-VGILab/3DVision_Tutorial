@@ -1,2 +1,27 @@
 data/
 user*
+__pycache__/
+*.py[cod]
+*.ply
+
+# Notebook/runtime artifacts
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Training logs and checkpoints
+*.log
+*.out
+*.err
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+events.out.tfevents.*
+
+# Generated experiment outputs
+results/
+pretrain_runs/
+ply_exports/
+wandb/
+runs/
+lightning_logs/
