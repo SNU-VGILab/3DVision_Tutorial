@@ -10,7 +10,7 @@ USER_ID ?= 0
 SESSION ?= 3d-perception
 SESSIONS := 3d-perception siren-and-nerf nerf-and-3dgs
 
-all: build copy-materials run-users
+all: build download-data copy-materials run-users
 
 run-users: run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
 
@@ -49,7 +49,6 @@ BLENDER_SCENES := chair drums ficus hotdog lego materials mic ship
 BLENDER_MIRROR := https://huggingface.co/datasets/nerfbaselines/nerfbaselines-data/resolve/main/blender
 download-data:
 	mkdir -p data
-	python3 -m pip install -q gdown
 	# --- ScanNet (3D perception) ---
 	if [ ! -f data/scannet_3d.zip ]; then \
 		wget "https://cvg-data.inf.ethz.ch/openscene/data/scannet_processed/scannet_3d.zip" -O data/scannet_3d.zip; \
@@ -78,10 +77,12 @@ download-data:
 	fi
 	# --- SIREN SDF point clouds (oriented .xyz: positions + unit normals) ---
 	if [ ! -f data/thai_statue.xyz ]; then \
-		gdown "1tkrHBciOzGLKZP0Pd9ye0Yz71JMdAtfl" -O data/thai_statue.xyz; \
+		docker run --rm --volume="$$(pwd)/data:/data" --workdir=/data ${IMAGE_NAME}:latest \
+			bash -lc 'command -v gdown >/dev/null 2>&1 || python -m pip install -q gdown; gdown "1tkrHBciOzGLKZP0Pd9ye0Yz71JMdAtfl" -O /data/thai_statue.xyz'; \
 	fi
 	if [ ! -f data/interior_room.xyz ]; then \
-		gdown "1SqlByPMwf6EcTJNrvlpRn5-GEO9DiYhI" -O data/interior_room.xyz; \
+		docker run --rm --volume="$$(pwd)/data:/data" --workdir=/data ${IMAGE_NAME}:latest \
+			bash -lc 'command -v gdown >/dev/null 2>&1 || python -m pip install -q gdown; gdown "1SqlByPMwf6EcTJNrvlpRn5-GEO9DiYhI" -O /data/interior_room.xyz'; \
 	fi
 
 copy_materials_single:

@@ -93,6 +93,7 @@ RUN pip install --no-cache-dir \
     pytest                  \
     rich                    \
     h5py                    \
+    gdown                   \
     wandb                   \
     hydra-core              \
     omegaconf               \
