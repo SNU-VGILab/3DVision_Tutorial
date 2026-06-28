@@ -72,7 +72,7 @@ To launch all 8 students at once, run `make all` (builds the image + starts `use
 make build
 ```
 
-- Resulting image: `seunguk/aiexpert:latest`
+- Resulting image: `snuvgilab/aiexpert:latest`
 - The build **injects the host UID/GID** (`--build-arg`) so the in-container user matches the host
   user. This avoids permission conflicts when reading/writing files in the mounted `./userN` dirs.
 - Key components: COLMAP 3.9.1, GLOMAP 1.0.0, WarpConvNet, hloc v1.4, tiny-cuda-nn,

@@ -1,5 +1,5 @@
 PROJECT_NAME := aiexpert
-IMAGE_NAME := seunguk/${PROJECT_NAME}
+IMAGE_NAME := snuvgilab/${PROJECT_NAME}
 SHM_SIZE := 64gb
 CUDA_ARCHITECTURES ?= 86
 DIR ?= user0
