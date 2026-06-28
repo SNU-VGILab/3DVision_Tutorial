@@ -36,6 +36,11 @@ data, distributes all lecture materials to `user0`-`user7`, and launches all 8 c
 make all
 ```
 
+> **Tip** — during Docker build, Docker Hub metadata/token requests can occasionally fail because
+> of transient DNS, IPv6, or external network issues. Errors such as `lookup registry-1.docker.io`,
+> `failed to fetch anonymous token`, or `network is unreachable` are usually not code issues. Wait
+> briefly and run the same command again; it often succeeds after a few tries.
+
 Then open the assigned Jupyter port in a browser. For `user0`:
 
 ```text
