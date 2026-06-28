@@ -8,8 +8,11 @@ PORT ?= 9000
 NERFSTUDIO_PORT ?= 10000
 USER_ID ?= 0
 SESSION ?= 3d-perception
+SESSIONS := 3d-perception siren-and-nerf nerf-and-3dgs
 
-all: build run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
+all: build copy-materials run-users
+
+run-users: run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
 
 build:
 	docker build \
@@ -82,18 +85,24 @@ download-data:
 	fi
 
 copy_materials_single:
-	mkdir -p user${USER_ID}
-	cp -r materials/${SESSION}/. user${USER_ID}/
+	mkdir -p user${USER_ID}/${SESSION}
+	cp -r materials/${SESSION}/. user${USER_ID}/${SESSION}/
+
+copy_materials_user:
+	for session in ${SESSIONS}; do \
+		mkdir -p user${USER_ID}/$$session; \
+		cp -r materials/$$session/. user${USER_ID}/$$session/; \
+	done
 
 copy-materials:
-	$(MAKE) copy_materials_single USER_ID=0
-	$(MAKE) copy_materials_single USER_ID=1
-	$(MAKE) copy_materials_single USER_ID=2
-	$(MAKE) copy_materials_single USER_ID=3
-	$(MAKE) copy_materials_single USER_ID=4
-	$(MAKE) copy_materials_single USER_ID=5
-	$(MAKE) copy_materials_single USER_ID=6
-	$(MAKE) copy_materials_single USER_ID=7
+	$(MAKE) copy_materials_user USER_ID=0
+	$(MAKE) copy_materials_user USER_ID=1
+	$(MAKE) copy_materials_user USER_ID=2
+	$(MAKE) copy_materials_user USER_ID=3
+	$(MAKE) copy_materials_user USER_ID=4
+	$(MAKE) copy_materials_user USER_ID=5
+	$(MAKE) copy_materials_user USER_ID=6
+	$(MAKE) copy_materials_user USER_ID=7
 
 run-user0:
 	$(MAKE) run DIR=user0 GPU_ID=0 PORT=9000 NERFSTUDIO_PORT=10000
@@ -120,4 +129,4 @@ run-user7:
 	$(MAKE) run DIR=user7 GPU_ID=7 PORT=9007 NERFSTUDIO_PORT=10007
 
 
-.PHONY: all run build download-data copy_materials_single copy-materials run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
+.PHONY: all run run-users build download-data copy_materials_single copy_materials_user copy-materials run-user0 run-user1 run-user2 run-user3 run-user4 run-user5 run-user6 run-user7
