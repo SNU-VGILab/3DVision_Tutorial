@@ -155,21 +155,29 @@ sessions (SIREN / NeRF / 3DGS) need no separate data download.
 
 ## 4. Distribute Materials
 
-Copy the notebooks and helper code for each session into the student workspaces (`./userN`).
-Copying the whole session folder is the recommended approach.
+Copy the notebooks and helper code for all sessions into the student workspaces (`./user0`-`./user7`):
 
 ```bash
-# e.g. distribute the SIREN & NeRF materials to user0
-cp -r materials/siren-and-nerf/* user0/
+make copy-materials
 ```
 
-> **Known issue** — the `copy-materials` / `copy_materials_single` targets in the `Makefile` still
-> point at the old flat layout (`materials/3DPerception.ipynb`, `materials/*.py`) and no longer
-> match the current per-topic folder structure. Use the manual copy above. (Updating the Makefile
-> targets to match the folder structure is recommended as a follow-up.)
+This creates one folder per session inside each student workspace:
 
-Typically only the exercise notebooks (`*.ipynb`) are distributed to students; the answer
-notebooks (`*_answer.ipynb`) are kept by the instructor or released after the session.
+```text
+user0/
+  3d-perception/
+  siren-and-nerf/
+  nerf-and-3dgs/
+```
+
+To copy only one session to one user:
+
+```bash
+make copy_materials_single USER_ID=0 SESSION=3d-perception
+```
+
+Answer notebooks (`*_answer.ipynb`) are not distributed to student folders. If old answer
+notebooks were already copied into `userN`, `make copy-materials` removes them.
 
 ---
 
