@@ -86,12 +86,14 @@ download-data:
 	fi
 
 copy_materials_single:
+	rm -rf user${USER_ID}/${SESSION}
 	mkdir -p user${USER_ID}/${SESSION}
 	tar --exclude='*_answer.ipynb' -C materials/${SESSION} -cf - . | tar -C user${USER_ID}/${SESSION} -xf -
 	find user${USER_ID}/${SESSION} -name '*_answer.ipynb' -delete
 
 copy_materials_user:
 	for session in ${SESSIONS}; do \
+		rm -rf user${USER_ID}/$$session; \
 		mkdir -p user${USER_ID}/$$session; \
 		tar --exclude='*_answer.ipynb' -C materials/$$session -cf - . | tar -C user${USER_ID}/$$session -xf -; \
 		find user${USER_ID}/$$session -name '*_answer.ipynb' -delete; \
