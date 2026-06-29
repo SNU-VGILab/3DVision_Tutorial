@@ -50,15 +50,27 @@ BLENDER_MIRROR := https://huggingface.co/datasets/nerfbaselines/nerfbaselines-da
 download-data:
 	mkdir -p data
 	# --- ScanNet (3D perception) ---
+	if [ -f data/scannet_3d.zip ] && ! python3 -m zipfile -t data/scannet_3d.zip >/dev/null 2>&1; then \
+		echo "Removing invalid data/scannet_3d.zip"; \
+		rm -f data/scannet_3d.zip; \
+	fi
 	if [ ! -f data/scannet_3d.zip ]; then \
 		wget "https://cvg-data.inf.ethz.ch/openscene/data/scannet_processed/scannet_3d.zip" -O data/scannet_3d.zip; \
 	fi
+	python3 -m zipfile -t data/scannet_3d.zip >/dev/null
 	python3 -m zipfile -e data/scannet_3d.zip data
 	# --- NeRF synthetic ("blender"), from the Hugging Face mirror ---
 	mkdir -p data/blender
 	for s in ${BLENDER_SCENES}; do \
 		if [ ! -d "data/blender/$$s/train" ]; then \
-			wget "${BLENDER_MIRROR}/$$s.zip" -O data/blender/$$s.zip; \
+			if [ -f data/blender/$$s.zip ] && ! python3 -m zipfile -t data/blender/$$s.zip >/dev/null 2>&1; then \
+				echo "Removing invalid data/blender/$$s.zip"; \
+				rm -f data/blender/$$s.zip; \
+			fi; \
+			if [ ! -f data/blender/$$s.zip ]; then \
+				wget "${BLENDER_MIRROR}/$$s.zip" -O data/blender/$$s.zip; \
+			fi; \
+			python3 -m zipfile -t data/blender/$$s.zip >/dev/null; \
 			python3 -m zipfile -e data/blender/$$s.zip data/blender; \
 			rm -f data/blender/$$s.zip; \
 		fi; \
@@ -66,12 +78,26 @@ download-data:
 	# --- mip-NeRF 360 (https://jonbarron.info/mipnerf360/), from Google Cloud Storage ---
 	mkdir -p data/mipnerf360
 	if [ ! -d "data/mipnerf360/bicycle" ]; then \
-		wget "http://storage.googleapis.com/gresearch/refraw360/360_v2.zip" -O data/mipnerf360/360_v2.zip; \
+		if [ -f data/mipnerf360/360_v2.zip ] && ! python3 -m zipfile -t data/mipnerf360/360_v2.zip >/dev/null 2>&1; then \
+			echo "Removing invalid data/mipnerf360/360_v2.zip"; \
+			rm -f data/mipnerf360/360_v2.zip; \
+		fi; \
+		if [ ! -f data/mipnerf360/360_v2.zip ]; then \
+			wget "http://storage.googleapis.com/gresearch/refraw360/360_v2.zip" -O data/mipnerf360/360_v2.zip; \
+		fi; \
+		python3 -m zipfile -t data/mipnerf360/360_v2.zip >/dev/null; \
 		python3 -m zipfile -e data/mipnerf360/360_v2.zip data/mipnerf360; \
 		rm -f data/mipnerf360/360_v2.zip; \
 	fi
 	if [ ! -d "data/mipnerf360/flowers" ]; then \
-		wget "http://storage.googleapis.com/gresearch/refraw360/360_extra_scenes.zip" -O data/mipnerf360/360_extra_scenes.zip; \
+		if [ -f data/mipnerf360/360_extra_scenes.zip ] && ! python3 -m zipfile -t data/mipnerf360/360_extra_scenes.zip >/dev/null 2>&1; then \
+			echo "Removing invalid data/mipnerf360/360_extra_scenes.zip"; \
+			rm -f data/mipnerf360/360_extra_scenes.zip; \
+		fi; \
+		if [ ! -f data/mipnerf360/360_extra_scenes.zip ]; then \
+			wget "http://storage.googleapis.com/gresearch/refraw360/360_extra_scenes.zip" -O data/mipnerf360/360_extra_scenes.zip; \
+		fi; \
+		python3 -m zipfile -t data/mipnerf360/360_extra_scenes.zip >/dev/null; \
 		python3 -m zipfile -e data/mipnerf360/360_extra_scenes.zip data/mipnerf360; \
 		rm -f data/mipnerf360/360_extra_scenes.zip; \
 	fi
